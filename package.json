@@ -1,0 +1,33 @@
+{
+  "name": "serverlessbackend",
+  "version": "1.0.0",
+  "description": "Serverless backend for managing tasks and lists",
+  "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=getAllLists --source=listFunctions.js --port=8080",
+    "startTasks": "functions-framework --target=getTasksInList --source=taskFunctions.js --port=8081",
+    "startUsers": "functions-framework --target=registerUser --source=userFunctions.js --port=8082",
+    "startAdmin": "functions-framework --target=getAllUsers --source=adminFunctions.js --port=8083",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "serverless",
+    "backend",
+    "cloud-functions"
+  ],
+  "author": "Your Name",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.4.0",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "mongoose": "^8.4.5",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  }
+}
