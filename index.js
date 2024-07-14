@@ -8,6 +8,8 @@ const { getTasksInList, createTaskInList, updateTask, deleteTask } = require('./
 const { registerUser, loginUser, refreshAccessToken, updateUserProfile, changeUserPassword, deleteUser } = require('./userFunctions');
 const { getAllUsers, adminChangePassword, adminChangeEmail, grantAdminRights, adminDeleteUser } = require('./adminFunctions');
 
+
+//routes
 app.get('/lists', getAllLists);
 app.post('/lists', createList);
 app.patch('/lists/:id', updateList);
