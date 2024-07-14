@@ -4,10 +4,7 @@
   "description": "Serverless backend for managing tasks and lists",
   "main": "index.js",
   "scripts": {
-    "start": "functions-framework --target=getAllLists --source=listFunctions.js --port=8080",
-    "startTasks": "functions-framework --target=getTasksInList --source=taskFunctions.js --port=8081",
-    "startUsers": "functions-framework --target=registerUser --source=userFunctions.js --port=8082",
-    "startAdmin": "functions-framework --target=getAllUsers --source=adminFunctions.js --port=8083",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -29,5 +26,8 @@
     "mongoose": "^8.4.5",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }
