@@ -1,51 +1,59 @@
-// adminFunctions.js
-require('dotenv').config();
-const mongoose = require('./db/db');
 const { User } = require('./db/models/user.model');
-const authenticate = require('./middleware/authenticate');
+const bcrypt = require('bcryptjs');
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+// Get all users
+exports.getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({});
+        res.status(200).json(users);
+    } catch (err) {
+        res.status(500).json({ error: "Error fetching users: " + (err ? err.message : 'Unknown error') });
+    }
+};
 
-exports.getAllUsers = [authenticate, (req, res) => {
-    User.find({})
-        .then(users => res.status(200).json(users))
-        .catch(err => res.status(500).json({ error: "Error fetching users: " + err.message }));
-}];
+// Admin change password
+exports.adminChangePassword = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
 
-exports.adminChangePassword = [authenticate, (req, res) => {
-    User.findOne({ _id: req.params.userId })
-        .then(user => {
-            if (!user) return res.status(404).json({ message: "User not found" });
-            user.password = req.body.password;
-            return user.save();
-        })
-        .then(() => res.status(200).json({ message: 'Password changed successfully' }))
-        .catch(err => res.status(500).json({ error: "Error changing password: " + err.message }));
-}];
+        user.password = req.body.newPassword; // Set the new password
+        await user.save(); // Save triggers the pre-save hook to hash the password
+        res.status(200).json({ message: 'Password updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: "Error changing password: " + (err ? err.message : 'Unknown error') });
+    }
+};
 
-exports.adminChangeEmail = [authenticate, (req, res) => {
-    User.findOneAndUpdate({ _id: req.params.userId }, { email: req.body.email }, { new: true })
-        .then(user => {
-            if (!user) return res.status(404).json({ message: "User not found" });
-            res.status(200).json(user);
-        })
-        .catch(err => res.status(500).json({ error: "Error changing email: " + err.message }));
-}];
+// Admin change email
+exports.adminChangeEmail = async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(req.params.userId, { email: req.body.newEmail }, { new: true });
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.status(200).json(user);
+    } catch (err) {
+        res.status(500).json({ error: "Error updating email: " + (err ? err.message : 'Unknown error') });
+    }
+};
 
-exports.grantAdminRights = [authenticate, (req, res) => {
-    User.findByIdAndUpdate(req.params.userId, { isAdmin: true }, { new: true })
-        .then(user => {
-            if (!user) return res.status(404).json({ message: "User not found" });
-            res.status(200).json(user);
-        })
-        .catch(err => res.status(500).json({ error: "Error granting admin rights: " + err.message }));
-}];
+// Grant admin rights
+exports.grantAdminRights = async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(req.params.userId, { isAdmin: true }, { new: true });
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.status(200).json(user);
+    } catch (err) {
+        res.status(500).json({ error: "Error granting admin rights: " + (err ? err.message : 'Unknown error') });
+    }
+};
 
-exports.adminDeleteUser = [authenticate, (req, res) => {
-    User.findByIdAndRemove(req.params.userId)
-        .then(user => {
-            if (!user) return res.status(404).json({ message: "User not found" });
-            res.status(200).json({ message: 'User deleted successfully' });
-        })
-        .catch(err => res.status(500).json({ error: "Error deleting user: " + err.message }));
-}];
+// Admin delete user
+exports.adminDeleteUser = async (req, res) => {
+    try {
+        const user = await User.findByIdAndDelete(req.params.userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: "Error deleting user: " + (err ? err.message : 'Unknown error') });
+    }
+};

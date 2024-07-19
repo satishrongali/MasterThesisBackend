@@ -1,63 +1,60 @@
-// userFunctions.js
 require('dotenv').config();
-const mongoose = require('./db/db');
 const { User } = require('./db/models/user.model');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const authenticate = require('./middleware/authenticate');
+const verifySession = require('./middleware/verifySession');
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-
-// userFunctions.js
-
+// Register User
 exports.registerUser = (req, res) => {
     let { email, password } = req.body;
-    
-    // First check if a user with the same email already exists
-    User.findOne({ email: email })
-        .then(existingUser => {
-            if (existingUser) {
-                // If user exists, send a conflict error
-                return res.status(409).json({ error: 'Email already in use.' });
-            }
 
-            // If no existing user, create a new user
-            let newUser = new User({ email, password });
-            newUser.save()
-                .then(user => res.status(201).json(user))
-                .catch(err => res.status(500).json({ error: 'Error saving user: ' + err.message }));
-        })
-        .catch(err => res.status(500).json({ error: 'Error checking user: ' + err.message }));
+    User.findOne({ email }).then(existingUser => {
+        if (existingUser) {
+            return res.status(409).json({ error: 'Email already in use.' });
+        }
+
+        let newUser = new User({ email, password });
+        newUser.save().then(user => {
+            return user.createSession().then((refreshToken) => {
+                return user.generateAccessAuthToken().then((accessToken) => {
+                    return { accessToken, refreshToken };
+                });
+            }).then((authTokens) => {
+                res.header('x-refresh-token', authTokens.refreshToken)
+                    .header('x-access-token', authTokens.accessToken)
+                    .send(user);
+            });
+        }).catch(err => res.status(500).json({ error: 'Error saving user: ' + err.message }));
+    }).catch(err => res.status(500).json({ error: 'Error checking user: ' + err.message }));
 };
 
-
+// Login User
 exports.loginUser = (req, res) => {
     let { email, password } = req.body;
-    User.findByCredentials(email, password)
-        .then(user => {
-            // Create JWT token
-            const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            // Return both user info and token
-            return res.status(200).json({
-                user: {
-                    email: user.email,
-                    isAdmin: user.isAdmin
-                },
-                token: token  // This is the JWT token
+
+    User.findByCredentials(email, password).then(user => {
+        return user.createSession().then((refreshToken) => {
+            return user.generateAccessAuthToken().then((accessToken) => {
+                return { accessToken, refreshToken };
             });
-        })
-        .catch(err => {
-            res.status(400).json({ error: err.message });
+        }).then((authTokens) => {
+            res.header('x-refresh-token', authTokens.refreshToken)
+                .header('x-access-token', authTokens.accessToken)
+                .send(user);
         });
+    }).catch((e) => {
+        res.status(400).json({ error: 'Login failed' });
+    });
 };
 
-exports.refreshAccessToken = [authenticate, (req, res) => {
-    const refreshToken = req.header('x-refresh-token');
-    const userId = req.header('_id');
-    User.findByIdAndToken(userId, refreshToken)
-        .then(user => user.generateAccessAuthToken())
-        .then(accessToken => res.header('x-access-token', accessToken).send({ accessToken }))
-        .catch(err => res.status(500).json({ error: "Error refreshing access token: " + err.message }));
-}];
+exports.refreshAccessToken = (req, res) => {
+    req.userObject.generateAccessAuthToken().then((accessToken) => {
+        res.header('x-access-token', accessToken).send({ accessToken });
+    }).catch((err) => {
+        res.status(400).send(err);
+    });
+};
 
 exports.updateUserProfile = [authenticate, (req, res) => {
     User.findByIdAndUpdate(req.user_id, { $set: req.body }, { new: true })
@@ -65,19 +62,26 @@ exports.updateUserProfile = [authenticate, (req, res) => {
             if (!user) return res.status(404).json({ message: "User not found" });
             res.status(200).json(user);
         })
-        .catch(err => res.status(500).json({ error: "Error updating user profile: " + err.message }));
+        .catch(err => res.status(500).json({ error: "Error updating user profile: " + (err ? err.message : 'Unknown error') }));
 }];
 
-exports.changeUserPassword = [authenticate, (req, res) => {
-    User.findById(req.user_id)
-        .then(user => {
-            if (!user) return res.status(404).json({ message: "User not found" });
-            user.password = req.body.password;
-            return user.save();
-        })
-        .then(() => res.status(200).json({ message: 'Password updated successfully' }))
-        .catch(err => res.status(500).json({ error: "Error changing password: " + err.message }));
+exports.changeUserPassword = [authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user_id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const hash = await bcrypt.hash(req.body.password, 10);
+        user.password = req.body.password;
+
+        await user.save();
+        res.status(200).json({ message: 'Password updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: "Error changing password: " + (err ? err.message : 'Unknown error') });
+    }
 }];
+
 
 exports.deleteUser = [authenticate, (req, res) => {
     User.findByIdAndRemove(req.user_id)
@@ -85,5 +89,5 @@ exports.deleteUser = [authenticate, (req, res) => {
             if (!user) return res.status(404).json({ message: "User not found" });
             res.status(200).json({ message: 'User deleted successfully' });
         })
-        .catch(err => res.status(500).json({ error: "Error deleting user: " + err.message }));
+        .catch(err => res.status(500).json({ error: "Error deleting user: " + (err ? err.message : 'Unknown error') }));
 }];

@@ -8,15 +8,11 @@ const TaskSchema = new mongoose.Schema({
         trim: true
     },
     _listId: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         required: true
-    },
-    completed: {
-        type: Boolean,
-        default: false
     }
-})
+});
 
 const Task = mongoose.model('Task', TaskSchema);
 
-module.exports = { Task }
+module.exports = { Task };

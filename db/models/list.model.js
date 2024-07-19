@@ -7,13 +7,12 @@ const ListSchema = new mongoose.Schema({
         minlength: 1,
         trim: true
     },
-    // with auth
     _userId: {
-        type: mongoose.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         required: true
     }
-})
+});
 
 const List = mongoose.model('List', ListSchema);
 
-module.exports = { List }
+module.exports = { List };

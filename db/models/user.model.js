@@ -1,25 +1,19 @@
 const mongoose = require('mongoose');
-const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
-
-// JWT Secret
-const jwtSecret = "51778657246321226641fsdklafjasdkljfsklfjd7148924065";
-
 
 const UserSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
-        minlength: 1,
-        trim: true,
-        unique: true
+        unique: true,
+        trim: true
     },
     password: {
         type: String,
         required: true,
-        minlength: 8
+        minlength: 6
     },
     isAdmin: {
         type: Boolean,
@@ -37,190 +31,105 @@ const UserSchema = new mongoose.Schema({
     }]
 });
 
-// *** Instance methods ***
+// Hash the password before saving
+UserSchema.pre('save', function (next) {
+    let user = this;
+    if (user.isModified('password')) {
+        bcrypt.genSalt(10, (err, salt) => {
+            if (err) return next(err);
+            bcrypt.hash(user.password, salt, (err, hash) => {
+                if (err) return next(err);
+                user.password = hash;
+                next();
+            });
+        });
+    } else {
+        next();
+    }
+});
 
-UserSchema.methods.toJSON = function () {
-    const user = this;
-    const userObject = user.toObject();
+// Compare hashed passwords
+UserSchema.methods.comparePassword = function (password) {
+    return bcrypt.compare(password, this.password);
+};
 
-    // return the document except the password and sessions (these shouldn't be made available)
-    return _.omit(userObject, ['password', 'sessions']);
-}
-
+// Generate an access auth token (method)
 UserSchema.methods.generateAccessAuthToken = function () {
     const user = this;
-    return new Promise((resolve, reject) => {
-        // Create the JSON Web Token and return that
-        jwt.sign({ _id: user._id.toHexString() }, jwtSecret, { expiresIn: "15m" }, (err, token) => {
-            if (!err) {
-                resolve(token);
-            } else {
-                // there is an error
-                reject();
-            }
-        })
-    })
-}
+    const accessToken = jwt.sign({ _id: user._id.toHexString() }, process.env.JWT_SECRET, { expiresIn: '15m' });
+    return Promise.resolve(accessToken);
+};
 
+// Generate a refresh auth token (method)
 UserSchema.methods.generateRefreshAuthToken = function () {
-    // This method simply generates a 64byte hex string - it doesn't save it to the database. saveSessionToDatabase() does that.
     return new Promise((resolve, reject) => {
         crypto.randomBytes(64, (err, buf) => {
-            if (!err) {
-                // no error
-                let token = buf.toString('hex');
+            if (err) reject(err);
+            const token = buf.toString('hex');
+            return resolve(token);
+        });
+    });
+};
 
-                return resolve(token);
-            }
-        })
-    })
-}
-
+// Create a session (instance method)
 UserSchema.methods.createSession = function () {
     let user = this;
-
     return user.generateRefreshAuthToken().then((refreshToken) => {
         return saveSessionToDatabase(user, refreshToken);
     }).then((refreshToken) => {
-    // saved to database successfully
-        // now return the refresh token
         return refreshToken;
-    }).catch((e) => {
-        return Promise.reject('Failed to save session to database.\n' + e);
-    })
-}
+    }).catch((err) => {
+        return Promise.reject('Failed to save session to database.\n' + err);
+    });
+};
 
-UserSchema.methods.changeEmail = function (newEmail){
-    const user = this;
-    this.email = newEmail;
-    user.save();
-}
+// Static method to find user by credentials
+UserSchema.statics.findByCredentials = function (email, password) {
+    let User = this;
+    return User.findOne({ email }).then((user) => {
+        if (!user) return Promise.reject('Login user failed');
+        return user.comparePassword(password).then((isMatch) => {
+            if (!isMatch) return Promise.reject('Login users failed');
+            return user;
+        });
+    });
+};
 
-UserSchema.methods.changePw = function (newPassword){
-    const user = this;
-    this.password = newPassword;
-    user.save();
-    // console.log("pw change works without hashing");
-
-    // Generate salt and hash password
-    // let costFactor = 10;
-
-    // bcrypt.genSalt(costFactor, (err, salt) => {
-    //     bcrypt.hash(newPassword, salt, (err, hash) => {
-    //         this.password = hash;
-    //         this.save();
-    //         // console.log("got this far");
-    //     })
-    // })
-}
-
-UserSchema.methods.makeAdmin = function (){
-    const user = this;
-    this.isAdmin = true;
-    user.save();
-}
-
-UserSchema.methods.checkIfAdmin = function(){
-    let user = this;
-    return this.isAdmin;
-}
-
-/* MODEL METHODS (static methods) */
-
-UserSchema.statics.getJWTSecret = () => {
-    return jwtSecret;
-}
+// Static method to find user by ID and token
 UserSchema.statics.findByIdAndToken = function (_id, token) {
-    // finds user by id and token
-    // used in auth middleware (verifySession)
-
     const User = this;
-
     return User.findOne({
         _id,
         'sessions.token': token
     });
-}
+};
 
-UserSchema.statics.findByCredentials = function (email, password) {
-    let User = this;
-    return User.findOne({ email }).then((user) => {
-        if (!user) return Promise.reject();
-
-        // pw check without hashing
-        if (password === user.password) return user;
-
-        // return new Promise((resolve, reject) => {
-        //     bcrypt.compare(password, user.password, (err, res) => {
-        //         if (res) {
-        //             resolve(user);
-        //         }
-        //         else {
-        //             reject();
-        //             console.log("here lies the issue!!!");
-        //         }
-        //     })
-        // })
-    })
-}
-
+// Check if the refresh token has expired
 UserSchema.statics.hasRefreshTokenExpired = (expiresAt) => {
     let secondsSinceEpoch = Date.now() / 1000;
-    if (expiresAt > secondsSinceEpoch) {
-        // hasn't expired
-        return false;
-    } else {
-        // has expired
-        return true;
-    }
-}
+    return expiresAt < secondsSinceEpoch;
+};
 
-
-/* MIDDLEWARE */
-// Before a user document is saved, this code runs
-
-// UserSchema.pre('save', function (next) {
-//     let user = this;
-//     let costFactor = 10;
-
-//     if (user.isModified('password')) {
-//         // if the password field has been edited/changed then run this code.
-
-//         // Generate salt and hash password
-//         bcrypt.genSalt(costFactor, (err, salt) => {
-//             bcrypt.hash(user.password, salt, (err, hash) => {
-//                 user.password = hash;
-//                 next();
-//             })
-//         })
-//     } else {
-//         next();
-//     }
-// });
-
-/* HELPER METHODS */
 let saveSessionToDatabase = (user, refreshToken) => {
-    // Save session to database
     return new Promise((resolve, reject) => {
         let expiresAt = generateRefreshTokenExpiryTime();
 
-          user.sessions.push({ 'token': refreshToken, expiresAt });
+        user.sessions.push({ token: refreshToken, expiresAt });
 
-                  user.save().then(() => {
-            // saved session successfully
+        user.save().then(() => {
             return resolve(refreshToken);
-        }).catch((e) => {
-            reject(e);
+        }).catch((err) => {
+            return reject(err);
         });
-    })
-}
+    });
+};
 
-    let generateRefreshTokenExpiryTime = () => {
+let generateRefreshTokenExpiryTime = () => {
     let daysUntilExpire = "10";
     let secondsUntilExpire = ((daysUntilExpire * 24) * 60) * 60;
     return ((Date.now() / 1000) + secondsUntilExpire);
-}
+};
 
 const User = mongoose.model('User', UserSchema);
 
-module.exports = { User }
+module.exports = { User };

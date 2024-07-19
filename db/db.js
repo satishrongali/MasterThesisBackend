@@ -1,14 +1,14 @@
-// db/db.js
+require('dotenv').config();
 const mongoose = require('mongoose');
 
-const mongoURI = process.env.MONGO_URI;  // Ensure this environment variable is set in your deployment config
+const mongoURI = process.env.MONGO_URI;
 
-mongoose.connect(mongoURI)
-    .then(() => {
-        console.log("Connected to MongoDB successfully!");
-    })
-    .catch((e) => {
-        console.error("Error connecting to MongoDB", e);
-    });
+if (!mongoURI) {
+    throw new Error('MongoDB URI is not set in environment variables');
+}
 
-module.exports = mongoose;
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Connected to MongoDB successfully!'))
+    .catch(err => console.log('Error connecting to MongoDB:', err.message));
+
+module.exports = { mongoose };
