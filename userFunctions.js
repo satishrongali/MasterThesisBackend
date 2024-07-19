@@ -72,7 +72,6 @@ exports.changeUserPassword = [authenticate, async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const hash = await bcrypt.hash(req.body.password, 10);
         user.password = req.body.password;
 
         await user.save();
