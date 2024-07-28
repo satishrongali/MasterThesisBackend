@@ -12,10 +12,10 @@ jobs:
 
     steps:
     - name: Set up safe directory
-      run: git config --global --add safe.directory 'C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend'
+      run: powershell -command "git config --global --add safe.directory 'C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend'"
 
     - name: Wait for a few seconds
-      run: Start-Sleep -Seconds 10
+      run: powershell -command "Start-Sleep -Seconds 10"
 
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -26,28 +26,28 @@ jobs:
         node-version: '18'
 
     - name: Clear npm cache
-      run: npm cache clean --force    
+      run: powershell -command "npm cache clean --force"    
 
     - name: Check Node.js and npm version
       run: |
-        echo "Node.js version: $(node -v)"
-        echo "npm version: $(npm -v)"
+       echo "Node.js version: $(node -v)"
+       echo "npm version: $(npm -v)"
       
     - name: Install Firebase CLI
-      run: npm install -g firebase-tools
+      run: powershell -command "npm install -g firebase-tools"
 
     - name: Install Functions Dependencies
-      run: npm ci --prefix functions
+      run: powershell -command "npm ci --prefix functions --loglevel verbose"
 
     - name: Set up Google Cloud Credentials
-      shell: pwsh
       run: |
-        $serviceAccountKey = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"))
+        $serviceAccountKey = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("ewoJInR5cGUiOiAi ... eHRcbiAiLC ... kgPQ=="))
         Set-Content -Path "$env:GITHUB_WORKSPACE/service-account.json" -Value $serviceAccountKey
         $env:GOOGLE_APPLICATION_CREDENTIALS="$env:GITHUB_WORKSPACE/service-account.json"
+      shell: powershell
 
     - name: Set Firebase Project
-      run: firebase use --add satish-masterthesis --alias default --debug
+      run: powershell -command "firebase use --add satish-masterthesis --alias default --debug"
 
     - name: Deploy to Firebase Functions
-      run: firebase deploy --only functions --debug
+      run: powershell -command "firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }} --debug"
