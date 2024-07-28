@@ -17,19 +17,24 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: Clear npm cache
+      run: npm cache clean --force    
+
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
         node-version: '18'
 
+    - name: Check Node.js and npm version
+      run: |
+       echo "Node.js version: $(node -v)"
+       echo "npm version: $(npm -v)"
+      
     - name: Install Firebase CLI
       run: npm install -g firebase-tools
 
-    - name: Install Root Dependencies
-      run: npm install
-
-    - name: Install Functions Dependencies
-      run: npm install --prefix functions
+    - name: Install Functions Dependencies with verbose logging
+      run: npm ci --prefix functions --loglevel verbose
 
     - name: Set Firebase Project
       env:
