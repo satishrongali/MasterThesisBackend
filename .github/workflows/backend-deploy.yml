@@ -46,7 +46,7 @@ jobs:
       env:
         FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
       run: |
-        firebase use --add satish-masterthesis --alias default --token ${{ secrets.FIREBASE_TOKEN }}
+        firebase use --add satish-masterthesis --alias default --token ${{ secrets.FIREBASE_TOKEN }} --debug
  #       firebase use default
 
     - name: Deploy to Firebase Functions
