@@ -23,7 +23,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '18'  # Update to use Node.js 18
+        node-version: '18'  # Use Node.js 18
 
     - name: Clear npm cache
       run: npm cache clean --force    
@@ -40,7 +40,7 @@ jobs:
       run: npm ci --prefix functions --loglevel verbose
 
     - name: Set up GOOGLE_APPLICATION_CREDENTIALS
-      run: echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > ${{ runner.temp }}/service-account.json
+      run: echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" | Out-File -FilePath ${{ runner.temp }}/service-account.json -Encoding utf8
 
     - name: Set Firebase Project
       env:
