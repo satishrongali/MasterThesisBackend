@@ -118,9 +118,9 @@ app.put('/admin/users/:userId/change-email', authenticate, adminChangeEmail);
 app.post('/admin/users/:userId/make-admin', authenticate, grantAdminRights);
 app.delete('/admin/users/:userId/delete-user', authenticate, adminDeleteUser);
 
-const PORT = process.env.APP_PORT || 8081;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// const PORT = process.env.APP_PORT || 8081;
+// app.listen(PORT, () => {
+//     console.log(`Server running on port ${PORT}`);
+// });
 
 exports.api = functions.https.onRequest(app);
