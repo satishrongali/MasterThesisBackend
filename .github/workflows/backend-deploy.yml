@@ -31,10 +31,10 @@ jobs:
     - name: Authenticate to Firebase
       env:
         FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-      run: echo "${FIREBASE_TOKEN}" | firebase auth:ci-login
+      run: firebase functions:config:set firebase.token=${{ secrets.FIREBASE_TOKEN }}
 
     - name: Set Firebase Project
       run: firebase use --add satish-masterthesis --alias default
 
     - name: Deploy to Firebase Functions
-      run: firebase deploy --only functions
+      run: firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }}
