@@ -37,5 +37,8 @@ jobs:
     - name: Install Dependencies
       run: npm install
 
+    - name: Set Firebase Project
+      run: firebase use --add satish-masterthesis --alias default
+
     - name: Deploy to Firebase Functions
       run: firebase deploy --only functions
