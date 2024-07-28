@@ -27,12 +27,8 @@ jobs:
 
     - name: Authenticate to Firebase
       env:
-        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      run: |
-        $firebaseServiceAccount = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($env:FIREBASE_SERVICE_ACCOUNT))
-        $firebaseServiceAccount | Out-File -FilePath $env:USERPROFILE/firebase-service-account.json -Encoding ascii
-        gcloud auth activate-service-account --key-file=$env:USERPROFILE/firebase-service-account.json
-      shell: powershell
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      run: firebase login:ci --no-localhost
 
     - name: Install Dependencies
       run: npm install
