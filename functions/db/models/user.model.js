@@ -8,27 +8,29 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        trim: true
+        trim: true,
     },
     password: {
         type: String,
         required: true,
-        minlength: 6
+        minlength: 6,
     },
     isAdmin: {
         type: Boolean,
-        default: false
+        default: false,
     },
-    sessions: [{
-        token: {
-            type: String,
-            required: true
+    sessions: [
+        {
+            token: {
+                type: String,
+                required: true,
+            },
+            expiresAt: {
+                type: Number,
+                required: true,
+            },
         },
-        expiresAt: {
-            type: Number,
-            required: true
-        }
-    }]
+    ],
 });
 
 // Hash the password before saving
@@ -74,13 +76,17 @@ UserSchema.methods.generateRefreshAuthToken = function () {
 // Create a session (instance method)
 UserSchema.methods.createSession = function () {
     let user = this;
-    return user.generateRefreshAuthToken().then((refreshToken) => {
-        return saveSessionToDatabase(user, refreshToken);
-    }).then((refreshToken) => {
-        return refreshToken;
-    }).catch((err) => {
-        return Promise.reject('Failed to save session to database.\n' + err);
-    });
+    return user
+        .generateRefreshAuthToken()
+        .then((refreshToken) => {
+            return saveSessionToDatabase(user, refreshToken);
+        })
+        .then((refreshToken) => {
+            return refreshToken;
+        })
+        .catch((err) => {
+            return Promise.reject('Failed to save session to database.\n' + err);
+        });
 };
 
 // Static method to find user by credentials
@@ -100,7 +106,7 @@ UserSchema.statics.findByIdAndToken = function (_id, token) {
     const User = this;
     return User.findOne({
         _id,
-        'sessions.token': token
+        'sessions.token': token,
     });
 };
 
@@ -116,18 +122,20 @@ let saveSessionToDatabase = (user, refreshToken) => {
 
         user.sessions.push({ token: refreshToken, expiresAt });
 
-        user.save().then(() => {
-            return resolve(refreshToken);
-        }).catch((err) => {
-            return reject(err);
-        });
+        user.save()
+            .then(() => {
+                return resolve(refreshToken);
+            })
+            .catch((err) => {
+                return reject(err);
+            });
     });
 };
 
 let generateRefreshTokenExpiryTime = () => {
-    let daysUntilExpire = "10";
-    let secondsUntilExpire = ((daysUntilExpire * 24) * 60) * 60;
-    return ((Date.now() / 1000) + secondsUntilExpire);
+    let daysUntilExpire = '10';
+    let secondsUntilExpire = daysUntilExpire * 24 * 60 * 60;
+    return Date.now() / 1000 + secondsUntilExpire;
 };
 
 const User = mongoose.model('User', UserSchema);

@@ -5,12 +5,12 @@ const TaskSchema = new mongoose.Schema({
         type: String,
         required: true,
         minlength: 1,
-        trim: true
+        trim: true,
     },
     _listId: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true
-    }
+        required: true,
+    },
 });
 
 const Task = mongoose.model('Task', TaskSchema);

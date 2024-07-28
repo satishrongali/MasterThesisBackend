@@ -7,8 +7,9 @@ if (!mongoURI) {
     throw new Error('MongoDB URI is not set in environment variables');
 }
 
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose
+    .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('Connected to MongoDB successfully!'))
-    .catch(err => console.log('Error connecting to MongoDB:', err.message));
+    .catch((err) => console.log('Error connecting to MongoDB:', err.message));
 
 module.exports = { mongoose };

@@ -1,14 +1,14 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../db/models/user.model');
 
-function authenticateAdmin(req, res, next) {
+function authenticate(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
         return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
 
     const tokenParts = authHeader.split(' ');
-    if (tokenParts.length !== 2 || tokenParts[0] !== "Bearer") {
+    if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
         return res.status(401).json({ message: 'Invalid token format.' });
     }
 
@@ -18,16 +18,11 @@ function authenticateAdmin(req, res, next) {
         if (!decoded._id) {
             return res.status(400).json({ message: 'Invalid token: ID not present.' });
         }
-        req.user_id = decoded._id;
-        User.findById(req.user_id).then((user) => {
-            if (!user || !user.isAdmin) {
-                return res.status(401).json({ message: 'Access denied. Admin privileges required.' });
-            }
-            next();
-        });
+        req.user_id = decoded._id; // Attach the user ID to the request object
+        next();
     } catch (ex) {
         res.status(400).json({ message: 'Invalid token: ' + ex.message });
     }
 }
 
-module.exports = authenticateAdmin;
+module.exports = authenticate;
