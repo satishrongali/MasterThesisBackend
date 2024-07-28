@@ -28,9 +28,10 @@ jobs:
     - name: Authenticate to Firebase
       id: auth
       run: |
-        echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > $HOME/firebase-service-account.json
+        $env:GOOGLE_APPLICATION_CREDENTIALS="${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+        $env:FIREBASE_SERVICE_ACCOUNT > $HOME/firebase-service-account.json
         gcloud auth activate-service-account --key-file=$HOME/firebase-service-account.json
-      shell: bash
+      shell: powershell
 
     - name: Install Dependencies
       run: npm install
