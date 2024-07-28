@@ -17,8 +17,8 @@ jobs:
     - name: Wait for a few seconds
       run: Start-Sleep -Seconds 10
 
-    - name: Clean up before checkout
-      run: if (Test-Path -Path "C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend") { Remove-Item -Path "C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend" -Recurse -Force }
+    # - name: Clean up before checkout
+    #   run: if (Test-Path -Path "C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend") { Remove-Item -Path "C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend" -Recurse -Force }
 
     - name: Checkout repository
       uses: actions/checkout@v2
