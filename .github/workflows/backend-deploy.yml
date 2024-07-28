@@ -17,37 +17,37 @@ jobs:
     - name: Wait for a few seconds
       run: Start-Sleep -Seconds 10
 
-    # - name: Clean up before checkout
-    #   run: if (Test-Path -Path "C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend") { Remove-Item -Path "C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend" -Recurse -Force }
-
     - name: Checkout repository
       uses: actions/checkout@v2
 
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '16'
+        node-version: '18'  # Update to use Node.js 18
 
     - name: Clear npm cache
       run: npm cache clean --force    
 
     - name: Check Node.js and npm version
       run: |
-       echo "Node.js version: $(node -v)"
-       echo "npm version: $(npm -v)"
+        echo "Node.js version: $(node -v)"
+        echo "npm version: $(npm -v)"
       
     - name: Install Firebase CLI
       run: npm install -g firebase-tools
 
-    - name: Install Functions Dependencies #with verbose logging
-      run: npm ci --prefix functions #--loglevel verbose
+    - name: Install Functions Dependencies with verbose logging
+      run: npm ci --prefix functions --loglevel verbose
+
+    - name: Set up GOOGLE_APPLICATION_CREDENTIALS
+      run: echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" > ${{ runner.temp }}/service-account.json
 
     - name: Set Firebase Project
       env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-      run: |
-        firebase use --add satish-masterthesis --alias default --token ${{ secrets.FIREBASE_TOKEN }} --debug
- #       firebase use default
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/service-account.json
+      run: firebase use --add satish-masterthesis --alias default --debug
 
-    - name: Deploy to Firebase Functions
-      run: firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }} --debug
+    - name: Deploy to Firebase Functions with verbose logging
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/service-account.json
+      run: firebase deploy --only functions --debug
