@@ -25,13 +25,13 @@ jobs:
     - name: Install Firebase CLI
       run: npm install -g firebase-tools
 
+    - name: Install Dependencies
+      run: npm install
+
     - name: Authenticate to Firebase
       env:
         FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-      run: firebase login:ci --no-localhost
-
-    - name: Install Dependencies
-      run: npm install
+      run: echo "${FIREBASE_TOKEN}" | firebase auth:ci-login
 
     - name: Set Firebase Project
       run: firebase use --add satish-masterthesis --alias default
