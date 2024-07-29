@@ -46,7 +46,6 @@ jobs:
 
     - name: Set environment variable for service account file path
       run: echo "GOOGLE_APPLICATION_CREDENTIALS=$GITHUB_WORKSPACE\service-account.json" >> $GITHUB_ENV
-            Write-Host "credentials are env.GOOGLE_APPLICATION_CREDENTIALS"
       shell: bash
 
     - name: Install Functions Dependencies
