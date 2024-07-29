@@ -38,7 +38,10 @@ jobs:
 
     # If the secret contains the Base64-encoded content
     - name: Create service account file from secret
-      run: echo ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }} | base64 -d > $env:GITHUB_WORKSPACE/service-account.json
+      run: |
+        $serviceAccountKey = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"))
+        Set-Content -Path "$env:GITHUB_WORKSPACE/service-account.json" -Value $serviceAccountKey
+        Write-Host "Service account JSON written to $env:GITHUB_WORKSPACE/service-account.json"
       shell: powershell
 
     - name: Set environment variable for service account file path
