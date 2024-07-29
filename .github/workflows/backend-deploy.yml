@@ -41,7 +41,7 @@ jobs:
 
     - name: Set up Google Cloud Credentials
       run: |
-        $serviceAccountKey = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("ewoJInR5cGUiOiAi ... eHRcbiAiLC ... kgPQ=="))
+        $serviceAccountKey = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"))
         Set-Content -Path "$env:GITHUB_WORKSPACE/service-account.json" -Value $serviceAccountKey
         $env:GOOGLE_APPLICATION_CREDENTIALS="$env:GITHUB_WORKSPACE/service-account.json"
       shell: powershell
