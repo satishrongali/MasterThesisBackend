@@ -14,8 +14,8 @@ jobs:
     - name: Set up safe directory
       run: powershell -command "git config --global --add safe.directory 'C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend'"
 
-    - name: Wait for a few seconds
-      run: powershell -command "Start-Sleep -Seconds 10"
+    # - name: Wait for a few seconds
+    #   run: powershell -command "Start-Sleep -Seconds 10"
 
     - name: Checkout repository
       uses: actions/checkout@v2
