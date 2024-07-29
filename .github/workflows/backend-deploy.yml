@@ -12,10 +12,10 @@ jobs:
 
     steps:
     - name: Set up safe directory
-      run: powershell -command "git config --global --add safe.directory 'C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend'"
+      run: git config --global --add safe.directory 'C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend'
 
-    # - name: Wait for a few seconds
-    #   run: powershell -command "Start-Sleep -Seconds 10"
+    - name: Wait for a few seconds
+      run: Start-Sleep -Seconds 10
 
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -26,29 +26,36 @@ jobs:
         node-version: '18'
 
     - name: Clear npm cache
-      run: powershell -command "npm cache clean --force"    
+      run: npm cache clean --force    
 
     - name: Check Node.js and npm version
       run: |
-       echo "Node.js version: $(node -v)"
-       echo "npm version: $(npm -v)"
+        echo "Node.js version: $(node -v)"
+        echo "npm version: $(npm -v)"
       
     - name: Install Firebase CLI
-      run: powershell -command "npm install -g firebase-tools"
+      run: npm install -g firebase-tools
 
     - name: Install Functions Dependencies
-      run: powershell -command "npm ci --prefix functions --loglevel verbose"
+      run: npm ci --prefix functions
 
     - name: Set up Google Cloud Credentials
+      shell: powershell
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
       run: |
         $serviceAccountKey = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}"))
         Set-Content -Path "$env:GITHUB_WORKSPACE/service-account.json" -Value $serviceAccountKey
         $env:GOOGLE_APPLICATION_CREDENTIALS="$env:GITHUB_WORKSPACE/service-account.json"
         Write-Host "Service account JSON written to $env:GITHUB_WORKSPACE/service-account.json"
-      shell: powershell
 
     - name: Set Firebase Project
-      run: powershell -command "firebase use --add satish-masterthesis --alias default --debug"
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+      run: |
+        firebase use --add satish-masterthesis --alias default --debug
 
     - name: Deploy to Firebase Functions
-      run: powershell -command "firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }} --debug"
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+      run: firebase deploy --only functions --debug
