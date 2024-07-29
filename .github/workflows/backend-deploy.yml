@@ -14,8 +14,8 @@ jobs:
     - name: Set up safe directory
       run: git config --global --add safe.directory 'C:/backend-runner/_work/MasterThesisBackend/MasterThesisBackend'
 
-    - name: Wait for a few seconds
-      run: Start-Sleep -Seconds 10
+    # - name: Wait for a few seconds
+    #   run: Start-Sleep -Seconds 10
 
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -46,6 +46,7 @@ jobs:
 
     - name: Set environment variable for service account file path
       run: echo "GOOGLE_APPLICATION_CREDENTIALS=$GITHUB_WORKSPACE\service-account.json" >> $GITHUB_ENV
+            Write-Host "credentials are env.GOOGLE_APPLICATION_CREDENTIALS"
       shell: bash
 
     - name: Install Functions Dependencies
